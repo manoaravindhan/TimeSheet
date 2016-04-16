@@ -7,56 +7,43 @@ package com.timesheet;
  * @author Mano
  *
  */
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserData {
-	@SuppressWarnings("unchecked")
+public class UserData{
+	// JDBC driver name and database URL
+		static final String JDBC_DRIVER = "org.postgresql.Driver";  
+		static final String DB_URL = "jdbc:postgresql://localhost:5433/timesheet";
+
+		//  Database credentials
+		static final String USER = "postgres";
+		static final String PASS = "root";
 	public List<UserBean> getAllUserBeans(){
-	      List<UserBean> UserBeanList = null;
-	      try {
-	         File file = new File("UserBeans.dat");
-	         if (!file.exists()) {
-	            UserBean UserBean = new UserBean(1, "Mano", "Jobless");
+		Connection connection= null;
+		Statement statement = null;
+		ResultSet resultSet = null;
+		List<UserBean> UserBeanList = null;
+		try {
+			System.out.println(JDBC_DRIVER);
+			Class.forName(JDBC_DRIVER);
+			connection = DriverManager.getConnection(DB_URL,USER, PASS);
+			statement = connection.createStatement();
+			String sqlQuery;
+			sqlQuery = "SELECT * FROM userdata";
+			resultSet = statement.executeQuery(sqlQuery);
+			while(resultSet.next()){
+				UserBean UserBean = new UserBean(resultSet.getInt("empid"), resultSet.getString("empname"), resultSet.getString("project"));
 	            UserBeanList = new ArrayList<UserBean>();
 	            UserBeanList.add(UserBean);
-	            saveUserBeanList(UserBeanList);		
-	         }
-	         else{
-	            FileInputStream fis = new FileInputStream(file);
-	            ObjectInputStream ois = new ObjectInputStream(fis);
-	            UserBeanList = (List<UserBean>) ois.readObject();
-	            ois.close();
-	         }
-	      } catch (IOException e) {
-	         e.printStackTrace();
-	      } catch (ClassNotFoundException e) {
-	         e.printStackTrace();
-	      }		
+		      }
+			statement.close();
+			connection.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println(e.getClass().getName()+": "+e.getMessage());
+			System.exit(0);
+		}	 	
 	      return UserBeanList;
-	   }
-
-	   private void saveUserBeanList(List<UserBean> UserBeanList){
-	      try {
-	         File file = new File("UserBeans.dat");
-	         FileOutputStream fos;
-
-	         fos = new FileOutputStream(file);
-
-	         ObjectOutputStream oos = new ObjectOutputStream(fos);
-	         oos.writeObject(UserBeanList);
-	         oos.close();
-	      } catch (FileNotFoundException e) {
-	         e.printStackTrace();
-	      } catch (IOException e) {
-	         e.printStackTrace();
-	      }
 	   }
 }
